@@ -3,12 +3,16 @@ const express = require('express');
 const router = express.Router()
 const bodyParser = require('body-parser');
 const conn = require('../db_connect')
- 
+const authMidldleware = require ('../middleware/bearer_token')
+const bcrypt = require ('bcrypt');
+
+
 // parse application/json
 router.use(bodyParser.json());
+router.use(authMidldleware.authenticateToken);
 
 //show list user
-router.get('/',(req, res) => {
+router.get('/', (req, res) => {
     const sql = "SELECT * FROM Users";
     const query = conn.query(sql, (err, results) => {
       if(err) throw err;
@@ -28,12 +32,24 @@ router.get('/user/:id',(req, res) => {
   
 //create new user
 router.post('/',(req, res) => {
-    const data = {id: req.body.id, fullname:req.body.fullname, username: req.body.username, password: req.body.password};
-    const sql = "INSERT INTO Users SET ?";
-    const query = conn.query(sql, data,(err, results) => {
+    const plainPassword=req.body.password
+    console.log(plainPassword);
+    bcrypt.hash(plainPassword, 10, function(err, hash) {
+      console.log(hash);
       if(err) throw err;
-      res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
-    console.log(req.body.fullname)
+
+        const data = { 
+          id: req.body.id, 
+          fullname:req.body.fullname, 
+          username: req.body.username, 
+          password: hash
+        };
+      const sql = "INSERT INTO Users SET ?";
+      const query = conn.query(sql, data,(err, results) => {
+        if(err) throw err;
+        res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+        console.log(req.body.fullname)
+      });
     });
   });
    
@@ -47,7 +63,7 @@ router.put('/user/:id',(req, res) => {
     });
   });
    
-//Delete data product berdasarkan id
+//Delete data user berdasarkan id
 router.delete('/user/:id',(req, res) => {
     let sql = "DELETE FROM Users WHERE id="+req.params.id+"";
     let query = conn.query(sql, (err, results) => {

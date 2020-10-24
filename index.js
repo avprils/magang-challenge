@@ -4,9 +4,10 @@ const port = 3001
 
 //import file routes
 const routerUser = require ('./routes/user')
-
+const routerAuth = require ('./routes/auth')
 //load routes
-app.use('/', routerUser)
+app.use('/user', routerUser)
+app.use('/login', routerAuth)
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
